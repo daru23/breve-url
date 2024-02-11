@@ -1,0 +1,45 @@
+version: "3.8"
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    volumes:
+      - ./backend/api/:/api
+    ports:
+      - "9000:9000"
+    environment:
+      MONGO_DB: "breve"
+    depends_on:
+      - db
+      - redis
+
+  db:
+    image: mongo:latest
+    restart: always
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: "breve"
+
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend/public:/app/public
+      - ./frontend/src:/app/src
+    environment:
+      - NODE_ENV=development
+      - REACT_APP_BACKEND_SERVICE_URL=http://localhost:9000
+    depends_on:
+      - backend
